@@ -1,36 +1,27 @@
 require "sqlite3"
 require "singleton"
+require_relative "model_base"
+# commented methods are deprecated
 
-
-class QuestionsDatabase < SQLite3::Database
-  include Singleton
-
-  def initialize
-    super('questions.db')
-    self.type_translation = true
-    self.results_as_hash = true
-  end
-end
-
-class Question
+class Question < ModelBase
   attr_accessor :title, :body, :author_id
 
   def self.most_liked(n)
     QuestionLikes.most_liked_questions(n)
   end
 
-  def self.find_by_author_id(author_id)
-    data = QuestionsDatabase.instance.execute(<<-SQL, author_id)
-    SELECT
-      *
-    FROM
-      questions
-    WHERE
-      author_id = ?
-    SQL
-
-    data.map {|datum| Question.new(datum)}
-  end
+  # def self.find_by_author_id(author_id)
+  #   data = QuestionsDatabase.instance.execute(<<-SQL, author_id)
+  #   SELECT
+  #     *
+  #   FROM
+  #     questions
+  #   WHERE
+  #     author_id = ?
+  #   SQL
+  #
+  #   data.map {|datum| Question.new(datum)}
+  # end
 
   def self.find_by_question_id(question_id)
     data = QuestionsDatabase.instance.execute(<<-SQL, question_id)
@@ -101,7 +92,7 @@ class Question
 
 end
 
-class Reply
+class Reply < ModelBase
   attr_accessor :author_id, :question_id, :parent_reply, :body
 
   def self.find_by_user_id(author_id)
@@ -117,20 +108,20 @@ class Reply
     data.map {|datum| Reply.new(datum)}
   end
 
-  def self.find_by_reply_id(reply_id)
-    data = QuestionsDatabase.instance.execute(<<-SQL, reply_id)
-    SELECT
-      *
-    FROM
-      replies
-    WHERE
-      id = ?
-    SQL
-
-    p data
-
-    Reply.new(data.first)
-  end
+  # def self.find_by_reply_id(reply_id)
+  #   data = QuestionsDatabase.instance.execute(<<-SQL, reply_id)
+  #   SELECT
+  #     *
+  #   FROM
+  #     replies
+  #   WHERE
+  #     id = ?
+  #   SQL
+  #
+  #   p data
+  #
+  #   Reply.new(data.first)
+  # end
 
   def self.find_by_question_id(question_id)
     data = QuestionsDatabase.instance.execute(<<-SQL, question_id)
@@ -172,7 +163,7 @@ class Reply
 
   def parent_reply
     raise "no parent" unless @parent_reply
-    Reply.find_by_reply_id(@parent_reply)
+    Reply.find_by_id(@parent_reply)
   end
 
   def child_replies
@@ -207,7 +198,7 @@ class Reply
   end
 end
 
-class User
+class User < ModelBase
   attr_accessor :fname, :lname
 
   def self.find_by_name (fname, lname)
@@ -241,7 +232,7 @@ class User
   end
 
   def authored_questions
-    Question.find_by_author_id(@id)
+    Question.find_by_id(@id)
   end
 
   def authored_replies
@@ -323,7 +314,6 @@ class QuestionsFollow
   end
 
 end
-
 
 class QuestionLikes
   def self.likers_for_question_id(question_id)
