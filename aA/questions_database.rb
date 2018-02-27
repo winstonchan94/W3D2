@@ -84,6 +84,21 @@ class Question
   def num_likes
     QuestionLikes.num_likes_for_question_id(@id)
   end
+  def save
+    raise "#{self} not in database" unless @id
+    QuestionsDatabase.instance.execute(<<-SQL, @title, @body, @author_id, @id)
+      UPDATE
+        questions
+      SET
+        title = ?,
+        body = ?,
+        author_id = ?
+      WHERE
+        id = ?
+    SQL
+
+  end
+
 end
 
 class Reply
@@ -174,6 +189,22 @@ class Reply
       data.map { |datum| Reply.new(datum) }
 
   end
+
+  def save
+    raise "#{self} not in database" unless @id
+    QuestionsDatabase.instance.execute(<<-SQL, @author_id, @question_id, @parent_reply, @body, @id)
+      UPDATE
+        users
+      SET
+        author_id = ?,
+        question_id = ?,
+        parent_reply = ?,
+        body = ?
+      WHERE
+        id = ?
+    SQL
+
+  end
 end
 
 class User
@@ -223,6 +254,20 @@ class User
 
   def liked_questions
     QuestionLikes.liked_questions_for_user_id(@id)
+  end
+
+  def save
+    raise "#{self} not in database" unless @id
+    QuestionsDatabase.instance.execute(<<-SQL, @fname, @lname, @id)
+      UPDATE
+        users
+      SET
+        fname = ?,
+        lname = ?
+      WHERE
+        id = ?
+    SQL
+
   end
 
 end
